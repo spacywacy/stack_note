@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en">
+<head>
+<!-- Required meta tags -->
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+<!-- Bootstrap CSS -->
+<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+
+<title>Stack Note</title>
+</head>
+
+
+		
+
+
+
+<body>
+
+
+<div class="container-fluid">
+<div class="row">
+
+<!--1st col-->
+<nav class="col-sm-1 d-none d-md-block bg-dark sidebar">
+	<div class="sidebar-sticky">
+		<form method="get">
+			<ul class="nav flex-column">
+				<li class="nav-item"><input class="btn text-white" type="submit" value="Tags" name="Tags"></li>
+				<li class="nav-item"><input class="btn text-white" type="submit" value="Sites" name="Sites"></li>
+				<li class="nav-item"><input class="btn text-white" type="submit" value="Notes" name="Notes"></li>
+			</ul>
+		</form>
+	</div>
+</nav>
+<!--1st col ends-->
+
+
+<!--2nd col-->
+<div class="col-sm-2 d-none d-md-block bg-light sidebar">
+	<form method="get">
+		<div class="row-fluid bg-secondary">
+			<input class="btn text-white" type="submit" value="Clear Filter" name="clear">
+		</div>
+		<ul class="list-group" style="max-height:1000px;overflow-y:scroll;">
+		{% for item in filter_items %}
+			<input class="btn text-left" type="submit" name="tag_{{ item }}" id="tag_{{ item }}" value="{{ item }}">
+		{% endfor %}
+		</ul>
+	</form>
+</div>
+<!--2nd col ends-->
+
+
+<!--3rd col-->
+<div class="col">
+
+	<div class="row-fluid">
+		<form method="get">
+			<i class="fas fa-search" aria-hidden="true"></i>
+			<input class="form-control" type="text" placeholder="Search" aria-label="Search">
+		</form>
+	</div>
+
+	<div class="row-fluid top-buffer">
+		<div class="card border-light">
+			<!--<div class="card-body">-->
+				<form method="get">
+					{% for item in selected_tags %}
+						<!--<input class="btn btn-outline-primary btn-sm" aria-label="Close" type="submit" value="{{ item }}" name="cleartag_{{ item }}">-->
+						<button type="submit" class="btn btn-outline-primary btn-sm" aria-label="Close" name="cleartag_{{ item }}" value="{{ item }}">{{ item }}<span aria-hidden="true">&times;</span></button>
+					{% endfor %}
+					{% for item in selected_sites %}
+						<input class="btn btn-outline-primary btn-sm" aria-label="Close" type="submit" value="{{ item }}" name="clearsite_{{ item }}">
+					{% endfor %}
+				</form>
+			<!--</div>-->
+		</div>
+	</div>
+
+	<div class="row-fluid">
+		<ul class="list-group">
+		{% for item in posts %}
+			<li class="list-group-item"><a href="{{ item.url }}" target="_blank">{{ item.title }}</a></li>
+		{% endfor %}
+		</ul>
+	</div>
+
+</div>
+<!--3rd col ends-->
+
+
+
+
+
+
+
+</div><!--outer row ends-->
+</div><!--outer container ends-->
+
+
+<!-- Optional JavaScript -->
+<!-- jQuery first, then Popper.js, then Bootstrap JS -->
+<script src="https://code.jquery.com/jquery-3.4.1.slim.min.js" integrity="sha384-J6qa4849blE2+poT4WnyKhv5vZF5SrPo0iEjwBvKU7imGFAV0wwj1yYfoRSJoZ+n" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js" integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" crossorigin="anonymous"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js" integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6" crossorigin="anonymous"></script>
+</body>
+</html>
+
+
