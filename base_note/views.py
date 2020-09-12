@@ -15,6 +15,7 @@ from .model_utils import query_user_tags
 from .model_utils import query_sites
 from .model_utils import query_date_range
 from .model_utils import get_checkbox
+from .documents import PostDocument
 from config import api_key
 from config import se_sites_path
 #from .test_models import test
@@ -75,6 +76,8 @@ def index(request):
 	#sites = ['stackoverflow']
 	#sdate_entry = '2020-01-01'
 	#endate_entry = '2020-12-31'
+
+	#filtering
 	if 'clear' in request.GET:
 		selected_tags = None
 		selected_sites = None
@@ -122,6 +125,15 @@ def index(request):
 		cache.set('selected_tags', selected_tags)
 		cache.set('selected_sites', selected_sites)
 
+	#searching
+	if 'search' in request.GET:
+		query_str = request.GET.get('search')
+		search_results = PostDocument.search().query('match', title=query_str)
+		search_re_ids = [x.id for x in search_results]
+	else:
+		search_re_ids = None
+
+
 
 	userposts = query_user_posts(str(request.user))
 	usertags = query_user_tags(str(request.user))
@@ -129,7 +141,8 @@ def index(request):
 						 tags=selected_tags,
 						 sites=selected_sites,
 						 sdate_entry=sdate,
-						 edate_entry=edate)
+						 edate_entry=edate,
+						 ids=search_re_ids)
 	
 
 	if 'Tags' in request.GET:

@@ -90,7 +90,7 @@ def query_user_posts(django_user):
 		return userposts
 
 		
-def filter_posts(userposts, tags=None, sites=None, sdate_entry=None, edate_entry=None):
+def filter_posts(userposts, tags=None, sites=None, sdate_entry=None, edate_entry=None, ids=None):
 	#tag: or condition
 	#site: or condition
 	#dates: and condition
@@ -109,6 +109,9 @@ def filter_posts(userposts, tags=None, sites=None, sdate_entry=None, edate_entry
 
 	if edate_entry:
 		filtered = filtered.filter(entry_date__lte=edate_entry)
+
+	if ids:
+		filtered = filtered.filter(userpost__post_key__id__in=ids)
 
 	return filtered.distinct()
 

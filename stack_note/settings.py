@@ -37,6 +37,7 @@ INSTALLED_APPS = [
 	'allauth.account', #new
 	'allauth.socialaccount', #new
 	'allauth.socialaccount.providers.stackexchange', #new
+	'django_elasticsearch_dsl', #new
 
 
 	'django.contrib.admin',
@@ -47,6 +48,12 @@ INSTALLED_APPS = [
 	'django.contrib.staticfiles',
 	'django.contrib.sites' #new
 ]
+
+ELASTICSEARCH_DSL = {
+	'default':{
+		'hosts': 'localhost:9200'
+	},
+}
 
 MIDDLEWARE = [
 	'django.middleware.security.SecurityMiddleware',
