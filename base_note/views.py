@@ -128,7 +128,7 @@ def index(request):
 	#searching
 	if 'search' in request.GET:
 		query_str = request.GET.get('search')
-		search_results = PostDocument.search().query('match', title=query_str)
+		search_results = PostDocument.search().query('match_phrase', title=query_str)
 		search_re_ids = [x.id for x in search_results]
 	else:
 		search_re_ids = None
@@ -164,6 +164,7 @@ def index(request):
 	if 'search' in request.GET:
 		context['selected_fields'] += ['search:{}'.format(request.GET.get('search'))]
 	context['has_filter'] = has_filter
+	context['n_posts'] = len(posts)
 
 	return render(request, 'index.html', context)
 
