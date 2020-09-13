@@ -97,23 +97,29 @@ def filter_posts(userposts, tags=None, sites=None, sdate_entry=None, edate_entry
 	#everything put together using and condition
 
 	filtered = userposts
+	has_filter = False
 
 	if tags:
 		filtered = filtered.filter(userpost__post_key__posttag__tag_key__tag_name__in=tags)
+		has_filter = True
 
 	if sites:
 		filtered = filtered.filter(site__in=sites)
+		has_filter = True
 
 	if sdate_entry:
 		filtered = filtered.filter(entry_date__gte=sdate_entry)
+		has_filter = True
 
 	if edate_entry:
 		filtered = filtered.filter(entry_date__lte=edate_entry)
+		has_filter = True
 
 	if ids:
 		filtered = filtered.filter(userpost__post_key__id__in=ids)
+		has_filter = True
 
-	return filtered.distinct()
+	return filtered.distinct(), has_filter
 
 
 def query_user_tags_(django_user):

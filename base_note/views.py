@@ -137,7 +137,7 @@ def index(request):
 
 	userposts = query_user_posts(str(request.user))
 	usertags = query_user_tags(str(request.user))
-	posts = filter_posts(userposts,
+	posts, has_filter = filter_posts(userposts,
 						 tags=selected_tags,
 						 sites=selected_sites,
 						 sdate_entry=sdate,
@@ -156,8 +156,14 @@ def index(request):
 
 	context['posts'] = posts
 	context['min_date'], context['max_date'] = query_date_range(posts)
-	context['selected_tags'] = selected_tags
-	context['selected_sites'] = selected_sites
+	context['selected_fields'] = []
+	if selected_tags:
+		context['selected_fields'] += selected_tags
+	if selected_sites:
+		context['selected_fields'] += selected_sites
+	if 'search' in request.GET:
+		context['selected_fields'] += ['search:{}'.format(request.GET.get('search'))]
+	context['has_filter'] = has_filter
 
 	return render(request, 'index.html', context)
 
