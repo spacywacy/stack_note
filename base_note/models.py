@@ -19,6 +19,7 @@ class Post(models.Model):
 	from_se = models.BooleanField()
 	se_activity_date = models.DateTimeField()
 	entry_date = models.DateTimeField()
+	text = models.TextField()
 
 	def __str__(self):
 		return self.title

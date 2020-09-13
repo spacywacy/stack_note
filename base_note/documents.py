@@ -11,7 +11,8 @@ class PostDocument(Document):
 		fields = [
 			'id',
 			'title',
-			'url'
+			'url',
+			'text'
 		]
 
 

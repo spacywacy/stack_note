@@ -7,6 +7,7 @@ import json
 from time import sleep
 from datetime import datetime
 import utils
+from bs4 import BeautifulSoup
 
 
 def call_api(url, params, raw=False):
@@ -88,16 +89,28 @@ def get_fav_ques(site_uids, api_key):
 			tags = item.get('tags')
 			se_activity_date = int(item.get('last_activity_date'))
 			se_activity_date = datetime.utcfromtimestamp(se_activity_date)
+			text = get_post_text(url)
 			item_dict = {
 				'site':site,
 				'title':title,
 				'url':url,
 				'tags':tags,
-				'se_activity_date':se_activity_date
+				'se_activity_date':se_activity_date,
+				'text':text
 			}
 			favs.append(item_dict)
 
 	return favs
+
+def get_post_text(url, top=5):
+	print('getting text for:', url)
+	re = requests.get(url)
+	soup = BeautifulSoup(re.content, 'html.parser')
+	post_content = soup.find_all(class_='s-prose js-post-body')
+	if len(post_content)<=top:
+		return '\n'.join([x.text for x in post_content])
+	else:
+		return '\n'.join([x.text for x in post_content[:top]])
 
 
 
@@ -107,6 +120,7 @@ def get_fav_ques(site_uids, api_key):
 
 
 if __name__ == '__main__':
+	'''
 	api_key = 'EfszLp6dWEhyCHQ8fxGpWA(('
 	se_sites_path = 'cache/se_sites.pickle'
 	inname = 'spacy_'
@@ -117,6 +131,10 @@ if __name__ == '__main__':
 	favs = get_fav_ques(site_uids, api_key)
 	for item in favs:
 		print(item)
+	'''
+
+	x = get_post_text('https://stackoverflow.com/questions/947215/how-to-get-a-list-of-column-names-on-sqlite3-database')
+	print(x)
 
 
 

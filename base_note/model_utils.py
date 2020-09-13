@@ -27,6 +27,7 @@ def bookmark_pull(django_user, post_items, from_se=True):
 		site = item_dict.get('site')
 		se_activity_date = item_dict.get('se_activity_date')
 		entry_date = datetime.now()
+		text = item_dict.get('text')
 
 		#save post
 		re_post = Post.objects.filter(url=url)
@@ -38,7 +39,9 @@ def bookmark_pull(django_user, post_items, from_se=True):
 						site=site,
 						from_se=from_se,
 						se_activity_date=se_activity_date,
-						entry_date=entry_date)
+						entry_date=entry_date,
+						text=text)
+			#print(post.text)
 			post.save()
 
 		#save UserPost
