@@ -37,8 +37,11 @@ def get_related(posts):
 		}
 	]
 	'''
+	posts_package = []
 	for post in posts:
 		related = re.get(post.url)
+		posts_package.append({'post':post, 'related':related})
+		
 		if not related and post.url not in new_items['urls']:
 			tags = PostTag.objects.filter(post_key=post)
 			tags = [x.tag_key.tag_name for x in tags]
@@ -56,6 +59,8 @@ def get_related(posts):
 		json.dump(new_items, f)
 
 
+	#return related_items
+	return posts_package
 
 
 

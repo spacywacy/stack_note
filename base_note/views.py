@@ -144,10 +144,6 @@ def index(request):
 						 sdate_entry=sdate,
 						 edate_entry=edate,
 						 ids=search_re_ids)
-
-	#call related api
-	get_related(posts)
-	
 	
 	if 'Tags' in request.GET:
 		filter_on = request.GET.get('Tags')
@@ -194,7 +190,15 @@ def index(request):
 		menu_sites = menu_notes = menu_dates = ''
 		cache.set('filter_on', 'Tags')
 
-	context['posts'] = posts
+	#call related api
+	#not sure if I should call api for related posts when loading page
+	#or get related posts in batch and store in db
+	posts_package = get_related(posts)
+
+	#context['posts'] = posts
+	context['posts'] = posts_package
+
+	#context['related_items'] = related_items
 	context['min_date'], context['max_date'] = query_date_range(posts)
 	context['selected_fields'] = []
 	if selected_tags:
@@ -211,24 +215,12 @@ def index(request):
 	context['menu_notes'] = menu_notes
 	context['menu_dates'] = menu_dates
 
-	return render(request, 'index.html', context)
-
-
-
-
-def index_(request):
-	print(request.GET)
-	context = {}
-	userposts = query_user_posts(str(request.user))
-	usertags = query_user_tags(str(request.user))
-	tag_names = [x.tag_key.tag_name for x in usertags]
-	context['filter_items'] = tag_names
-	context['posts'] = userposts
-
-
-
+	context['test_item'] = {'a':[1,2,3]}
 
 	return render(request, 'index.html', context)
+
+
+
 
 
 
