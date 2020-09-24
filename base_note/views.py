@@ -15,7 +15,9 @@ from .model_utils import query_user_tags
 from .model_utils import query_sites
 from .model_utils import query_date_range
 from .model_utils import get_checkbox
+from .model_utils import get_tags_of_post
 from .documents import PostDocument
+from .related_api import get_related
 from config import api_key
 from config import se_sites_path
 #from .test_models import test
@@ -89,8 +91,8 @@ def index(request):
 		cache.delete('selected_edate')
 	else:
 		#filter fields
-		form_tags = get_checkbox(request.GET, 'tag')
-		form_sites = get_checkbox(request.GET, 'site')
+		form_tags = get_checkbox(request.GET, 'Tags')
+		form_sites = get_checkbox(request.GET, 'Sites')
 		#selected_tags = cache.get('selected_tags', default=[]) + form_tags
 		#selected_sites = cache.get('selected_sites', default=[]) + form_sites
 		selected_tags = cache.get('selected_tags', default=set())
@@ -116,10 +118,9 @@ def index(request):
 			edate = None
 
 		#clear filters
-		clear_form_tags = get_checkbox(request.GET, 'cleartag')
-		clear_form_sites = get_checkbox(request.GET, 'clearsite')
-		selected_tags = set([x for x in selected_tags if x not in clear_form_tags])
-		selected_sites = set([x for x in selected_sites if x not in clear_form_sites])
+		clear_form_filters = get_checkbox(request.GET, 'clearfilter')
+		selected_tags = set([x for x in selected_tags if x not in clear_form_filters])
+		selected_sites = set([x for x in selected_sites if x not in clear_form_filters])
 
 		#cache selected
 		cache.set('selected_tags', selected_tags)
@@ -136,23 +137,62 @@ def index(request):
 
 
 	userposts = query_user_posts(str(request.user))
-	usertags = query_user_tags(str(request.user))
+	usertags = query_user_tags(str(request.user), selected_tags, request.GET.get('sort_by',None))
 	posts, has_filter = filter_posts(userposts,
 						 tags=selected_tags,
 						 sites=selected_sites,
 						 sdate_entry=sdate,
 						 edate_entry=edate,
 						 ids=search_re_ids)
-	
 
+	#call related api
+	get_related(posts)
+	
+	
 	if 'Tags' in request.GET:
-		context['filter_items'] = [x.tag_key.tag_name for x in usertags]
+		filter_on = request.GET.get('Tags')
 	elif 'Sites' in request.GET:
-		context['filter_items'] = query_sites(userposts)
+		filter_on = request.GET.get('Sites')
+	elif 'Dates' in request.GET:
+		filter_on = request.GET.get('Dates')
 	elif 'Notes' in request.GET:
-		context['filter_items'] = None
+		filter_on = request.GET.get('Notes')
+	elif cache.get('filter_on', None):
+		filter_on = cache.get('filter_on')
 	else:
-		context['filter_items'] = [x.tag_key.tag_name for x in usertags]
+		filter_on = None
+
+	if filter_on == 'Tags':
+		context['filter_items'] = usertags
+		filter_field = 'Tags'
+		menu_tags = 'bg-info'
+		menu_sites = menu_notes = menu_dates = ''
+		cache.set('filter_on', 'Tags')
+	elif filter_on == 'Sites':
+		context['filter_items'] = query_sites(userposts, selected_sites, request.GET.get('sort_by',None))
+		filter_field = 'Sites'
+		menu_sites = 'bg-info'
+		menu_tags = menu_notes = menu_dates = ''
+		cache.set('filter_on', 'Sites')
+	elif filter_on == 'Dates':
+		context['filter_items'] = None
+		filter_field = 'Dates'
+		menu_dates = 'bg-info'
+		menu_tags = menu_sites = menu_notes = ''
+		cache.set('filter_on', 'Dates')
+	elif filter_on == 'Notes':
+		context['filter_items'] = None
+		filter_field = 'Notes'
+		menu_notes = 'bg-info'
+		menu_tags = menu_sites = menu_dates = ''
+		cache.set('filter_on', 'Notes')
+	else:
+		filter_on = cache.get('filter_on')
+		context['filter_items'] = usertags
+		filter_field = 'Tags'
+		menu_tags = 'bg-info'
+		menu_sites = menu_notes = menu_dates = ''
+		cache.set('filter_on', 'Tags')
 
 	context['posts'] = posts
 	context['min_date'], context['max_date'] = query_date_range(posts)
@@ -165,6 +205,11 @@ def index(request):
 		context['selected_fields'] += ['search:{}'.format(request.GET.get('search'))]
 	context['has_filter'] = has_filter
 	context['n_posts'] = len(posts)
+	context['filter_field'] = filter_field
+	context['menu_tags'] = menu_tags
+	context['menu_sites'] = menu_sites
+	context['menu_notes'] = menu_notes
+	context['menu_dates'] = menu_dates
 
 	return render(request, 'index.html', context)
 

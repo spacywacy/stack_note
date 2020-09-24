@@ -122,7 +122,10 @@ def filter_posts(userposts, tags=None, sites=None, sdate_entry=None, edate_entry
 		filtered = filtered.filter(userpost__post_key__id__in=ids)
 		has_filter = True
 
-	return filtered.distinct(), has_filter
+	if filtered:
+		return filtered.distinct(), has_filter
+	else:
+		None, None
 
 
 def query_user_tags_(django_user):
@@ -132,18 +135,64 @@ def query_user_tags_(django_user):
 	if has_results:
 		return usertags
 
-def query_user_tags(django_user):
+def query_user_tags(django_user, selected_tags, sort_by=None):
 	user_name = str(django_user)
 	usertags = UserTag.objects.filter(user_key__username=user_name)
 	has_results = bool(usertags)
+	
 	if has_results:
-		return usertags
+		results = []
+		for item in usertags:
+			item_dict = {}
+			item_dict['name'] = item.tag_key.tag_name
+			item_dict['count'] = item.count
+			if selected_tags and item.tag_key.tag_name in selected_tags:
+				item_dict['bg_color'] = 'bg-primary'
+				item_dict['text_color'] = 'text-white'
+			else:
+				item_dict['bg_color'] = ''
+				item_dict['text_color'] = ''
+			results.append(item_dict)
 
-def query_sites(userposts):
-	sites = set()
+		if sort_by == 'name':
+			results = sorted(results, key=lambda x: x[sort_by], reverse=False)
+		elif sort_by == 'count':
+			results = sorted(results, key=lambda x: x[sort_by], reverse=True)
+
+		return results
+
+def get_tags_of_post(post):
+	return PostTag.objects.filter(post_key=post)
+
+
+
+def query_sites(userposts, selected_sites, sort_by=None):
+	counts = {}
 	for item in userposts:
-		sites.add(item.site)
-	return list(sites)
+		counts[item.site] = counts.get(item.site, 0) + 1
+
+	#return [{'name':site_name, 'count':count,} for site_name, count in counts.items()]
+	results = []
+	for site, count in counts.items():
+		item_dict = {}
+		item_dict['name'] = site
+		item_dict['count'] = count
+		if selected_sites and site in selected_sites:
+			item_dict['bg_color'] = 'bg-primary'
+			item_dict['text_color'] = 'text-white'
+		else:
+			item_dict['bg_color'] = ''
+			item_dict['text_color'] = ''
+		results.append(item_dict)
+
+	if sort_by == 'name':
+		results = sorted(results, key=lambda x: x[sort_by], reverse=False)
+	elif sort_by == 'count':
+		results = sorted(results, key=lambda x: x[sort_by], reverse=True)
+
+	return results
+
+
 
 def query_date_range(filtered):
 	min_date = filtered.aggregate(Min('entry_date'))['entry_date__min']
