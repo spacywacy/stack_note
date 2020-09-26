@@ -46,6 +46,8 @@ class UserPost(models.Model):
 	pair_id = models.CharField(max_length=256) #user_name-url
 	user_key = models.ForeignKey(User, on_delete=models.CASCADE)
 	post_key = models.ForeignKey(Post, on_delete=models.CASCADE)
+	#marked_answer = models.URLField()
+	#user_comment = models.CharField(max_length=1024)
 
 	def __str__(self):
 		return 'user:{} - post:{}'.format(self.user_key, self.post_key)
@@ -54,6 +56,33 @@ class UserPost(models.Model):
 		indexes = [
 			models.Index(fields=['pair_id', 'user_key', 'post_key'])
 		]
+
+class Markedanswer(models.Model):
+	user_key = models.ForeignKey(User, on_delete=models.CASCADE)
+	post_key = models.ForeignKey(Post, on_delete=models.CASCADE)
+	marked_answer = models.URLField()
+
+	def __str__(self):
+		return '{}-{}-{}'.format(self.user_key, self.post_key, self.marked_answer)
+
+	class Meta:
+		indexes = [
+			models.Index(fields=['user_key', 'post_key'])
+		]
+
+class Usercomment(models.Model):
+	user_key = models.ForeignKey(User, on_delete=models.CASCADE)
+	post_key = models.ForeignKey(Post, on_delete=models.CASCADE)
+	user_comment = models.CharField(max_length=1024)
+
+	def __str__(self):
+		return '{}-{}-{}'.format(self.user_key, self.post_key, self.user_comment)
+
+	class Meta:
+		indexes = [
+			models.Index(fields=['user_key', 'post_key'])
+		]
+
 
 class PostTag(models.Model):
 	pair_id = models.CharField(max_length=256) #url-tag_name

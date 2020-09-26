@@ -6,6 +6,8 @@ from .models import Tag
 from .models import PostTag
 from .models import UserTag
 from .models import UserPost
+from .models import Usercomment
+from .models import Markedanswer
 from django.db.models import Q
 from django.db.models import Min
 from django.db.models import Max
@@ -211,6 +213,80 @@ def get_checkbox(get_obj, checkbox_name):
 				results.append(item_name)
 
 	return results
+
+def get_post_boxes(post_obj, box_name):
+	results = []
+	for k, v in post_obj.items():
+		form_item = k.split('_')
+		print(form_item)
+		if len(form_item) > 1:
+			item_prefix = form_item[0]
+			item_name = form_item[1]
+			print(item_prefix, item_name)
+			if item_prefix == box_name and bool(v):
+				results.append((item_name, v))
+
+	return results
+
+def add_answer_comment(post_obj, user_name):
+	#get user
+	user = User.objects.get(username=user_name)
+
+	#get form data
+	answer_urls = get_post_boxes(post_obj, 'answerbox')
+	user_comments = get_post_boxes(post_obj, 'commentbox')
+
+	#loop answer_urls
+	for item in answer_urls:
+		post_id = int(item[0])
+		answer_url = item[1]
+		post = Post.objects.get(id=post_id)
+		comment_obj = Markedanswer(
+			user_key=user,
+			post_key=post,
+			marked_answer=answer_url
+		)
+		comment_obj.save()
+
+	#loop user_comments
+	for item in answer_urls:
+		post_id = int(item[0])
+		user_comment = item[1]
+		post = Post.objects.get(id=post_id)
+		comment_obj = Usercomment(
+			user_key=user,
+			post_key=post,
+			user_comment=user_comment
+		)
+		comment_obj.save()
+
+
+	print('added answer comment')
+
+
+def get_answer_comment(posts_package, user_name):
+	#get user
+	user = User.objects.get(username=user_name)
+
+	for i in range(len(posts_package)):
+
+		post = posts_package[i]['post']
+		answers = Markedanswer.objects.filter(post_key=post).filter(user_key=user)
+		#print('answers')
+		#print(answers)
+		if answers:
+			posts_package[i]['answers'] = answers
+		else:
+			posts_package[i]['answers'] = None
+
+		comments = Usercomment.objects.filter(post_key=post).filter(user_key=user)
+		#print('comments')
+		#print(comments)
+		if comments:
+			posts_package[i]['comments'] = comments
+		else:
+			posts_package[i]['comments'] = None
+
 
 
 def test(django_user):

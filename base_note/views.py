@@ -15,7 +15,10 @@ from .model_utils import query_user_tags
 from .model_utils import query_sites
 from .model_utils import query_date_range
 from .model_utils import get_checkbox
+from .model_utils import get_post_boxes
 from .model_utils import get_tags_of_post
+from .model_utils import add_answer_comment
+from .model_utils import get_answer_comment
 from .documents import PostDocument
 from .related_api import get_related
 from config import api_key
@@ -54,7 +57,7 @@ def index(request):
 
 	#test(request.user)
 	print(request.GET)
-	#print(request.POST)
+	print(request.POST)
 
 	context = {}
 
@@ -195,8 +198,20 @@ def index(request):
 	#or get related posts in batch and store in db
 	posts_package = get_related(posts)
 
+	#get answer url & comment
+	get_answer_comment(posts_package, str(request.user))
+	aaa = posts_package[0]['answers']
+	for x in aaa:
+		print(x)
+
 	#context['posts'] = posts
 	context['posts'] = posts_package
+
+	#get text summary & tags
+	for item in posts_package:
+		item['summary'] = item['post'].text[:350]
+		item['posttag'] = get_tags_of_post(item['post'])
+
 
 	#context['related_items'] = related_items
 	context['min_date'], context['max_date'] = query_date_range(posts)
@@ -215,7 +230,10 @@ def index(request):
 	context['menu_notes'] = menu_notes
 	context['menu_dates'] = menu_dates
 
-	context['test_item'] = {'a':[1,2,3]}
+
+	#add answer url & comment
+	add_answer_comment(request.POST, str(request.user))
+
 
 	return render(request, 'index.html', context)
 

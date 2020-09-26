@@ -102,6 +102,7 @@ def get_fav_ques(site_uids, api_key):
 
 	return favs
 
+
 def get_post_text(url, top=5):
 	print('getting text for:', url)
 	re = requests.get(url)
@@ -111,6 +112,9 @@ def get_post_text(url, top=5):
 		return '\n'.join([x.text for x in post_content])
 	else:
 		return '\n'.join([x.text for x in post_content[:top]])
+
+
+
 
 
 
