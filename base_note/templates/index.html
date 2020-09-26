@@ -134,6 +134,7 @@
 					<div class="card-header bg-white" id="headingOne">
 						<!--<h5 class="mb-0">-->
 							<a href="{{ item.post.url }}" target="_blank">{{ item.post.title }}</a>
+
 							<button class="btn btn-white btn-sm float-right" data-toggle="collapse" data-target="#collapse{{forloop.counter}}" aria-expanded="true" aria-controls="collapse{{forloop.counter}}">
 								<svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-chevron-down" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
 									<path fill-rule="evenodd" d="M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z"/>
@@ -162,7 +163,34 @@
 								</div>
 							</div>
 
-							<div class="row" style="padding-top:0%;padding-left:2%;font-size:.9em;">{{ item.summary }}...</div>
+							<div class="row" style="padding-top:0%;padding-left:2%;font-size:.9em;">
+								<div class="col" style="padding-left:0%;">
+								<b>Comment: </b>
+								<p>{{ item.comment.user_comment }}</p>
+								</div>
+							</div>
+
+							<div class="row" style="padding-top:0%;padding-left:2%;font-size:.9em;">
+								<b>Question: </b>{{ item.summary }}...
+							</div>
+
+							{% if item.answers %}
+							{% for answer in item.answers %}
+							<div class="row" style="padding-left:0%;padding-left:2%;">
+								<li class="list-group-item border-0" style="padding-left:0%;padding-top:2%;padding-bottom:0%;font-size:.9em;">
+									<b>Answer: </b>
+									<a class="text-muted" href="{{ answer.marked_answer }}">
+										{{ answer.marked_answer }}...
+									</a>
+								</li>
+								<li class="list-group-item border-0" style="padding-left:0%;padding-top:0%;padding-bottom:0%;font-size:.9em;">
+										{{ answer.answer_text }}...
+								</li>
+
+							</div>
+							{% endfor %}
+							{% endif %}
+
 
 							<div class="row" style="padding-top:1%;padding-bottom:1%;">
 								<div class="col">
@@ -193,51 +221,38 @@
 							</div>
 
 							<div class="row">
+							<div class="col">
 							<form method="post">
 								{% csrf_token %}
-								<div class="col">
-									<div class="collapse" id="answerbox">
-									<div class="input-group mb-6">
-										<input class="form-control" type="url" placeholder="Add url to answer" name="answerbox_{{ item.post.id }}">
+								<div class="collapse" id="answerbox">
+								<div class="input-group mb-6">
+									<input class="form-control" type="url" placeholder="Add url to answer" name="answerbox_{{ item.post.id }}">
+									<div class="input-group-append">
+										<input class="btn btn-info btn-sm" type="submit" value="Add">
+									</div>
+								</div>
+								</div>
+							</form>
+							</div>
+							</div>
+
+							<div class="row">
+							<div class="col">
+								<form method="post">
+								{% csrf_token %}
+									<div class="collapse" id="commentbox">
+										<textarea class="form-control" type="textarea" placeholder="Add comment or notes" name="commentbox_{{ item.post.id }}">{{ item.comment.user_comment }}</textarea>
 										<div class="input-group-append">
 											<input class="btn btn-info btn-sm" type="submit" value="Add">
 										</div>
 									</div>
-									</div>
-								</div>
+								</form>
 							</div>
-							</form>
-							<form method="post">
-							<div class="row">
-								<div class="col">
-									<div class="collapse" id="commentbox">
-										<textarea class="form-control" type="textarea" placeholder="Add comment or notes" name="commentbox_{{ item.post.id }}"></textarea>
-										<div class="input-group-append">
-											<input class="btn btn-info btn-sm" type="button" value="Add">
-										</div>
-									</div>
-								</div>
-							</form>
 							</div>
-
-							{% if item.answers %}
-								<div class="row" style="padding-left:1%;">
-								<ul>
-								<li class="list-group-item border-0" style="padding-left:0%;padding-bottom:0.1%;">
-									<h6 class="mb-1">Marked Answers</h6>
-								</li>
-								{% for answer in item.answers %}
-									<li class="list-group-item border-0" style="padding-left:0%;padding-top:0%;padding-bottom:0%;font-size:.9em;"><a class="text-muted" href="{{ answer.marked_answer }}">{{ answer.marked_answer }}</a></li>
-								{% endfor %}
-								</ul>
-								</div>
-							{% endif %}
-
-
 
 							{% if item.related %}
-								<div class="row" style="padding-left:1%;">
-								<ul>
+							<div class="row" style="padding-left:0%;">
+								<ul style="padding-left:2%;">
 								<li class="list-group-item border-0" style="padding-left:0%;padding-bottom:0.1%;">
 									<h6 class="mb-1">Related Questions</h6>
 								</li>
@@ -245,7 +260,7 @@
 									<li class="list-group-item border-0" style="padding-left:0%;padding-top:0%;padding-bottom:0%;font-size:.9em;"><a class="text-muted" href="{{ related_post.url }}">{{ related_post.title }}</a></li>
 								{% endfor %}
 								</ul>
-								</div>
+							</div>
 							{% endif %}
 
 						</div>

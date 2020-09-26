@@ -8,6 +8,7 @@ from .models import UserTag
 from .models import UserPost
 from .models import Usercomment
 from .models import Markedanswer
+from .se_api import get_answer_text
 from django.db.models import Q
 from django.db.models import Min
 from django.db.models import Max
@@ -218,11 +219,11 @@ def get_post_boxes(post_obj, box_name):
 	results = []
 	for k, v in post_obj.items():
 		form_item = k.split('_')
-		print(form_item)
+		#print(form_item)
 		if len(form_item) > 1:
 			item_prefix = form_item[0]
 			item_name = form_item[1]
-			print(item_prefix, item_name)
+			#print(item_prefix, item_name)
 			if item_prefix == box_name and bool(v):
 				results.append((item_name, v))
 
@@ -236,32 +237,44 @@ def add_answer_comment(post_obj, user_name):
 	answer_urls = get_post_boxes(post_obj, 'answerbox')
 	user_comments = get_post_boxes(post_obj, 'commentbox')
 
+	posted = False
+
 	#loop answer_urls
 	for item in answer_urls:
 		post_id = int(item[0])
 		answer_url = item[1]
 		post = Post.objects.get(id=post_id)
+		answer_text = get_answer_text(answer_url)
 		comment_obj = Markedanswer(
 			user_key=user,
 			post_key=post,
-			marked_answer=answer_url
+			marked_answer=answer_url,
+			answer_text=answer_text
 		)
+		posted = True
 		comment_obj.save()
 
 	#loop user_comments
-	for item in answer_urls:
+	for item in user_comments:
 		post_id = int(item[0])
 		user_comment = item[1]
 		post = Post.objects.get(id=post_id)
-		comment_obj = Usercomment(
-			user_key=user,
-			post_key=post,
-			user_comment=user_comment
-		)
+		comment_obj = Usercomment.objects.filter(post_key=post).filter(user_key=user)
+		if comment_obj:
+			comment_obj = comment_obj[0]
+			comment_obj.user_comment = user_comment
+		else:
+			comment_obj = Usercomment(
+				user_key=user,
+				post_key=post,
+				user_comment=user_comment
+			)
+		posted = True
 		comment_obj.save()
 
-
-	print('added answer comment')
+	if posted:
+		print('added answer comment')
+		return True
 
 
 def get_answer_comment(posts_package, user_name):
@@ -279,13 +292,11 @@ def get_answer_comment(posts_package, user_name):
 		else:
 			posts_package[i]['answers'] = None
 
-		comments = Usercomment.objects.filter(post_key=post).filter(user_key=user)
-		#print('comments')
-		#print(comments)
-		if comments:
-			posts_package[i]['comments'] = comments
+		comment = Usercomment.objects.filter(post_key=post).filter(user_key=user)
+		if comment:
+			posts_package[i]['comment'] = comment[0]
 		else:
-			posts_package[i]['comments'] = None
+			posts_package[i]['comment'] = None
 
 
 

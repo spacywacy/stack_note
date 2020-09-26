@@ -1,4 +1,4 @@
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.http import HttpResponse
 from django.contrib.auth.decorators import login_required
 from django.views.generic import TemplateView
@@ -200,9 +200,11 @@ def index(request):
 
 	#get answer url & comment
 	get_answer_comment(posts_package, str(request.user))
-	aaa = posts_package[0]['answers']
-	for x in aaa:
-		print(x)
+	
+	
+	#aaa = posts_package[0]['answers']
+	#for x in aaa:
+		#print(x.)
 
 	#context['posts'] = posts
 	context['posts'] = posts_package
@@ -232,7 +234,10 @@ def index(request):
 
 
 	#add answer url & comment
-	add_answer_comment(request.POST, str(request.user))
+	posted = add_answer_comment(request.POST, str(request.user))
+	if posted:
+		print('redirecting')
+		return redirect(index)
 
 
 	return render(request, 'index.html', context)

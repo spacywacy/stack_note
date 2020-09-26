@@ -61,6 +61,7 @@ class Markedanswer(models.Model):
 	user_key = models.ForeignKey(User, on_delete=models.CASCADE)
 	post_key = models.ForeignKey(Post, on_delete=models.CASCADE)
 	marked_answer = models.URLField()
+	answer_text = models.CharField(max_length=1024)
 
 	def __str__(self):
 		return '{}-{}-{}'.format(self.user_key, self.post_key, self.marked_answer)

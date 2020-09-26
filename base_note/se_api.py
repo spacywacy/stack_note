@@ -2,6 +2,7 @@ import sys
 sys.path.append('../')
 
 import os
+import re
 import requests
 import json
 from time import sleep
@@ -105,8 +106,8 @@ def get_fav_ques(site_uids, api_key):
 
 def get_post_text(url, top=5):
 	print('getting text for:', url)
-	re = requests.get(url)
-	soup = BeautifulSoup(re.content, 'html.parser')
+	res = requests.get(url)
+	soup = BeautifulSoup(res.content, 'html.parser')
 	post_content = soup.find_all(class_='s-prose js-post-body')
 	if len(post_content)<=top:
 		return '\n'.join([x.text for x in post_content])
@@ -114,11 +115,21 @@ def get_post_text(url, top=5):
 		return '\n'.join([x.text for x in post_content[:top]])
 
 
-
-
-
-
-
+def get_answer_text(url):
+	#get answer id
+	reg_str = '.com/a/.*/'
+	reg_match = re.search(reg_str, url)
+	if reg_match:
+		answer_id = url[reg_match.span()[0]: reg_match.span()[1]]
+		answer_id = answer_id[7:-1]
+		
+		#get answer content
+		res = requests.get(url)
+		soup = BeautifulSoup(res.content, 'html.parser')
+		answer_section = soup.find_all(id='answer-{}'.format(answer_id))[0]
+		answer_content = answer_section.find_all(class_='s-prose js-post-body')
+		text = '\n'.join([x.text for x in answer_content])
+		return text[:450]
 
 
 
@@ -137,8 +148,11 @@ if __name__ == '__main__':
 		print(item)
 	'''
 
-	x = get_post_text('https://stackoverflow.com/questions/947215/how-to-get-a-list-of-column-names-on-sqlite3-database')
-	print(x)
+	#x = get_post_text('https://stackoverflow.com/questions/947215/how-to-get-a-list-of-column-names-on-sqlite3-database')
+	#print(x)
+
+	url = 'https://stackoverflow.com/a/2427389/11623643'
+	get_answer_text(url)
 
 
 
