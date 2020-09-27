@@ -8,6 +8,8 @@ from .models import UserTag
 from .models import UserPost
 from .models import Usercomment
 from .models import Markedanswer
+from .models import Bucket
+from .models import PostBucket
 from .se_api import get_answer_text
 from django.db.models import Q
 from django.db.models import Min
@@ -96,7 +98,7 @@ def query_user_posts(django_user):
 		return userposts
 
 		
-def filter_posts(userposts, tags=None, sites=None, sdate_entry=None, edate_entry=None, ids=None):
+def filter_posts(userposts, tags=None, sites=None, sdate_entry=None, edate_entry=None, ids=None, buckets=None):
 	#tag: or condition
 	#site: or condition
 	#dates: and condition
@@ -125,10 +127,14 @@ def filter_posts(userposts, tags=None, sites=None, sdate_entry=None, edate_entry
 		filtered = filtered.filter(userpost__post_key__id__in=ids)
 		has_filter = True
 
+	if buckets:
+		filtered = filtered.filter(userpost__post_key__postbucket__bucket_key__bucket_name__in=buckets)
+		has_filter = True
+
 	if filtered:
 		return filtered.distinct(), has_filter
 	else:
-		None, None
+		return None, None
 
 
 def query_user_tags_(django_user):
@@ -196,12 +202,36 @@ def query_sites(userposts, selected_sites, sort_by=None):
 	return results
 
 
-
 def query_date_range(filtered):
 	min_date = filtered.aggregate(Min('entry_date'))['entry_date__min']
 	max_date = filtered.aggregate(Max('entry_date'))['entry_date__max']
 
 	return min_date, max_date
+
+
+def query_buckets(user_name, selected_buckets, sort_by=None):
+	user = User.objects.get(username=user_name)
+	user_buckets = Bucket.objects.filter(owner=user)
+	results = []
+	for bucket in user_buckets:
+		item_dict = {}
+		item_dict['name'] = bucket.bucket_name
+		item_dict['count'] = bucket.count
+		if selected_buckets and bucket.bucket_name in selected_buckets:
+			item_dict['bg_color'] = 'bg-primary'
+			item_dict['text_color'] = 'text_white'
+		else:
+			item_dict['bg_color'] = ''
+			item_dict['text_color'] = ''
+		results.append(item_dict)
+
+	if sort_by == 'name':
+		results = sorted(results, key=lambda x: x[sort_by], reverse=False)
+	elif sort_by == 'count':
+		results = sorted(results, key=lambda x: x[sort_by], reverse=True)
+
+	return results
+
 
 def get_checkbox(get_obj, checkbox_name):
 	results = []

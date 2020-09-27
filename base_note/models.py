@@ -29,6 +29,31 @@ class Post(models.Model):
 			models.Index(fields=['url', 'entry_date'])
 		]
 
+class Bucket(models.Model):
+	bucket_name = models.CharField(max_length=200)
+	owner = models.ForeignKey(User, on_delete=models.CASCADE)
+	count = models.IntegerField()
+
+	def __str__(self):
+		return self.bucket_name
+
+	class Meta:
+		indexes = [
+			models.Index(fields=['bucket_name', 'owner'])
+		]
+
+class PostBucket(models.Model):
+	post_key = models.ForeignKey(Post, on_delete=models.CASCADE)
+	bucket_key = models.ForeignKey(Bucket, on_delete=models.CASCADE)
+
+	def __str__(self):
+		return 'post:{} - bucket:{}'.format(self.post_key, self.bucket_key)
+
+	class Meta:
+		indexes = [
+			models.Index(fields=['post_key', 'bucket_key'])
+		]
+
 
 class Tag(models.Model):
 	tag_name = models.CharField(max_length=64)

@@ -36,8 +36,8 @@
 				<li class="nav-item {{ menu_dates }}">
 					<input class="btn bth-primary text-white" type="submit" value="Dates" name="Dates">
 				</li>
-				<li class="nav-item {{ menu_notes }}">
-					<input class="btn bth-primary text-white" type="submit" value="Notes" name="Notes">
+				<li class="nav-item {{ menu_buckets }}">
+					<input class="btn bth-primary text-white" type="submit" value="Buckets" name="Buckets">
 				</li>
 			</ul>
 		</form>
@@ -48,10 +48,10 @@
 
 <!--2nd col-->
 <div class="col-sm-3 d-none d-md-block bg-light sidebar">
-	{% if filter_field in 'TagsSites' %}
+	{% if filter_field in 'TagsSitesBuckets' %}
 	<form method="get">
 		<div class="row">
-			<div class="col-sm-2"><h5 class="font-italic">{{ filter_field }}:</h5></div>
+			<div class="col-sm-3"><h5 class="font-italic">{{ filter_field }}:</h5></div>
 			<div class="col-sm-5">
 				<button class="btn btn-outline-dark btn-sm" type="submit" name="clear" aria-label="Close" style="border:0px">
 					<span aria-hidden="true">&times;</span>Clear Filter
@@ -83,8 +83,6 @@
 	</form>
 	{% elif filter_field in 'Dates' %}
 		<label>xxx</label>
-	{% elif filter_field in 'Notes' %}
-		<label>yyy</label>
 	{% endif %}
 </div>
 <!--2nd col ends-->
@@ -134,7 +132,9 @@
 					<div class="card-header bg-white" id="headingOne">
 						<!--<h5 class="mb-0">-->
 							<a href="{{ item.post.url }}" target="_blank">{{ item.post.title }}</a>
-
+							{% if item.comment %}
+								<div class="row" style="height:0em;padding-left:2%;">{{ item.comment.user_comment }}</div>
+							{% endif %}
 							<button class="btn btn-white btn-sm float-right" data-toggle="collapse" data-target="#collapse{{forloop.counter}}" aria-expanded="true" aria-controls="collapse{{forloop.counter}}">
 								<svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-chevron-down" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
 									<path fill-rule="evenodd" d="M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z"/>
@@ -160,13 +160,6 @@
 								{% for posttag in item.posttag%}
 									<span class="badge badge-secondary" disabled>{{ posttag.tag_key }}</span>
 								{% endfor %}
-								</div>
-							</div>
-
-							<div class="row" style="padding-top:0%;padding-left:2%;font-size:.9em;">
-								<div class="col" style="padding-left:0%;">
-								<b>Comment: </b>
-								<p>{{ item.comment.user_comment }}</p>
 								</div>
 							</div>
 
@@ -203,7 +196,7 @@
 										data-target="#answerbox"
 										aria-controls="answerbox"
 									>
-										Mark which answer
+										Mark an answer
 									</button>
 
 									<button
@@ -214,7 +207,7 @@
 										data-target="#commentbox"
 										aria-controls="commentbox"
 									>
-										Add comment
+										Edit comment
 									</button>
 
 								</div>

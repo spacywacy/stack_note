@@ -19,6 +19,7 @@ from .model_utils import get_post_boxes
 from .model_utils import get_tags_of_post
 from .model_utils import add_answer_comment
 from .model_utils import get_answer_comment
+from .model_utils import query_buckets
 from .documents import PostDocument
 from .related_api import get_related
 from config import api_key
@@ -86,22 +87,27 @@ def index(request):
 	if 'clear' in request.GET:
 		selected_tags = None
 		selected_sites = None
+		selected_buckets = None
 		sdate = None
 		edate = None
 		cache.delete('selected_tags')
 		cache.delete('selected_sites')
 		cache.delete('selected_sdate')
 		cache.delete('selected_edate')
+		cache.delete('selected_buckets')
 	else:
 		#filter fields
 		form_tags = get_checkbox(request.GET, 'Tags')
 		form_sites = get_checkbox(request.GET, 'Sites')
+		form_buckets = get_checkbox(request.GET, 'Buckets')
 		#selected_tags = cache.get('selected_tags', default=[]) + form_tags
 		#selected_sites = cache.get('selected_sites', default=[]) + form_sites
 		selected_tags = cache.get('selected_tags', default=set())
 		selected_sites = cache.get('selected_sites', default=set())
+		selected_buckets = cache.get('selected_buckets', default=set())
 		selected_tags = selected_tags.union(set(form_tags))
 		selected_sites = selected_sites.union(set(form_sites))
+		selected_buckets = selected_buckets.union(set(form_buckets))
 
 		
 		if request.GET.get('sdate', None):
@@ -124,10 +130,12 @@ def index(request):
 		clear_form_filters = get_checkbox(request.GET, 'clearfilter')
 		selected_tags = set([x for x in selected_tags if x not in clear_form_filters])
 		selected_sites = set([x for x in selected_sites if x not in clear_form_filters])
+		selected_buckets = set([x for x in selected_buckets if x not in clear_form_filters])
 
 		#cache selected
 		cache.set('selected_tags', selected_tags)
 		cache.set('selected_sites', selected_sites)
+		cache.set('selected_buckets', selected_buckets)
 
 	#searching
 	if 'search' in request.GET:
@@ -146,7 +154,8 @@ def index(request):
 						 sites=selected_sites,
 						 sdate_entry=sdate,
 						 edate_entry=edate,
-						 ids=search_re_ids)
+						 ids=search_re_ids,
+						 buckets=selected_buckets)
 	
 	if 'Tags' in request.GET:
 		filter_on = request.GET.get('Tags')
@@ -154,8 +163,8 @@ def index(request):
 		filter_on = request.GET.get('Sites')
 	elif 'Dates' in request.GET:
 		filter_on = request.GET.get('Dates')
-	elif 'Notes' in request.GET:
-		filter_on = request.GET.get('Notes')
+	elif 'Buckets' in request.GET:
+		filter_on = request.GET.get('Buckets')
 	elif cache.get('filter_on', None):
 		filter_on = cache.get('filter_on')
 	else:
@@ -165,71 +174,70 @@ def index(request):
 		context['filter_items'] = usertags
 		filter_field = 'Tags'
 		menu_tags = 'bg-info'
-		menu_sites = menu_notes = menu_dates = ''
+		menu_sites = menu_buckets = menu_dates = ''
 		cache.set('filter_on', 'Tags')
 	elif filter_on == 'Sites':
 		context['filter_items'] = query_sites(userposts, selected_sites, request.GET.get('sort_by',None))
 		filter_field = 'Sites'
 		menu_sites = 'bg-info'
-		menu_tags = menu_notes = menu_dates = ''
+		menu_tags = menu_buckets = menu_dates = ''
 		cache.set('filter_on', 'Sites')
 	elif filter_on == 'Dates':
 		context['filter_items'] = None
 		filter_field = 'Dates'
 		menu_dates = 'bg-info'
-		menu_tags = menu_sites = menu_notes = ''
+		menu_tags = menu_sites = menu_buckets = ''
 		cache.set('filter_on', 'Dates')
-	elif filter_on == 'Notes':
-		context['filter_items'] = None
-		filter_field = 'Notes'
-		menu_notes = 'bg-info'
+	elif filter_on == 'Buckets':
+		context['filter_items'] = query_buckets(str(request.user), [], request.GET.get('sort_by',None))
+		filter_field = 'Buckets'
+		menu_buckets = 'bg-info'
 		menu_tags = menu_sites = menu_dates = ''
-		cache.set('filter_on', 'Notes')
+		cache.set('filter_on', 'Buckets')
 	else:
 		filter_on = cache.get('filter_on')
 		context['filter_items'] = usertags
 		filter_field = 'Tags'
 		menu_tags = 'bg-info'
-		menu_sites = menu_notes = menu_dates = ''
+		menu_sites = menu_buckets = menu_dates = ''
 		cache.set('filter_on', 'Tags')
 
 	#call related api
 	#not sure if I should call api for related posts when loading page
 	#or get related posts in batch and store in db
-	posts_package = get_related(posts)
+	if posts:
+		posts_package = get_related(posts)
 
-	#get answer url & comment
-	get_answer_comment(posts_package, str(request.user))
-	
-	
-	#aaa = posts_package[0]['answers']
-	#for x in aaa:
-		#print(x.)
+		#get answer url & comment
+		get_answer_comment(posts_package, str(request.user))
 
-	#context['posts'] = posts
-	context['posts'] = posts_package
+		#context['posts'] = posts
+		context['posts'] = posts_package
 
-	#get text summary & tags
-	for item in posts_package:
-		item['summary'] = item['post'].text[:350]
-		item['posttag'] = get_tags_of_post(item['post'])
+		#get text summary & tags
+		for item in posts_package:
+			item['summary'] = item['post'].text[:350]
+			item['posttag'] = get_tags_of_post(item['post'])
+
+		#dates & n_posts
+		context['min_date'], context['max_date'] = query_date_range(posts)
+		context['n_posts'] = len(posts)
 
 
-	#context['related_items'] = related_items
-	context['min_date'], context['max_date'] = query_date_range(posts)
 	context['selected_fields'] = []
 	if selected_tags:
 		context['selected_fields'] += selected_tags
 	if selected_sites:
 		context['selected_fields'] += selected_sites
+	if selected_buckets:
+		context['selected_fields'] += selected_buckets
 	if 'search' in request.GET:
 		context['selected_fields'] += ['search:{}'.format(request.GET.get('search'))]
 	context['has_filter'] = has_filter
-	context['n_posts'] = len(posts)
 	context['filter_field'] = filter_field
 	context['menu_tags'] = menu_tags
 	context['menu_sites'] = menu_sites
-	context['menu_notes'] = menu_notes
+	context['menu_buckets'] = menu_buckets
 	context['menu_dates'] = menu_dates
 
 
