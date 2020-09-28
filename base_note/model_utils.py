@@ -306,6 +306,34 @@ def add_answer_comment(post_obj, user_name):
 		print('added answer comment')
 		return True
 
+def add_post_to_bucket(post_obj, user_name):
+	bucket_pairs = get_post_boxes(post_obj, 'add2bucket')
+	posted = False
+
+	#loop bucket pairs
+	for item in bucket_pairs:
+		#add post bucket pair
+		post_key = Post.objects.filter(id=item[1])[0]
+		bucket_key = Bucket.objects.filter(bucket_name=item[0])[0]
+		print(item[0])
+		print(bucket_key)
+		post_bucket = PostBucket(
+			post_key = post_key,
+			bucket_key = bucket_key
+		)
+		post_bucket.save()
+
+		#update bucket post count
+		bucket_key.count += 1
+		bucket_key.save()
+
+		posted = True
+
+
+	return posted
+
+
+
 
 def get_answer_comment(posts_package, user_name):
 	#get user

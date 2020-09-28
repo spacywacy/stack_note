@@ -20,6 +20,7 @@ from .model_utils import get_tags_of_post
 from .model_utils import add_answer_comment
 from .model_utils import get_answer_comment
 from .model_utils import query_buckets
+from .model_utils import add_post_to_bucket
 from .documents import PostDocument
 from .related_api import get_related
 from config import api_key
@@ -239,14 +240,19 @@ def index(request):
 	context['menu_sites'] = menu_sites
 	context['menu_buckets'] = menu_buckets
 	context['menu_dates'] = menu_dates
+	context['buckets'] = query_buckets(str(request.user), [], request.GET.get('sort_by',None))
 
 
 	#add answer url & comment
 	posted = add_answer_comment(request.POST, str(request.user))
+	
+	#add post to bucket
+	posted = add_post_to_bucket(request.POST, str(request.user))
+
+
 	if posted:
 		print('redirecting')
 		return redirect(index)
-
 
 	return render(request, 'index.html', context)
 

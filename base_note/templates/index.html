@@ -210,6 +210,17 @@
 										Edit comment
 									</button>
 
+									<button
+										class="btn btn-outline-info btn-sm"
+										type="button"
+										style="padding-left:1%;padding-right:1%;padding-top:0%;padding-bottom:0%;"
+										data-toggle="collapse"
+										data-target="#bucketbox"
+										aria-controls="bucketbox"
+									>
+										Add to bucket
+									</button>
+
 								</div>
 							</div>
 
@@ -238,6 +249,21 @@
 										<div class="input-group-append">
 											<input class="btn btn-info btn-sm" type="submit" value="Add">
 										</div>
+									</div>
+								</form>
+							</div>
+							</div>
+
+							<div class="row">
+							<div class="col">
+								<form method="post">
+								{% csrf_token %}
+									<div class="collapse" id="bucketbox">
+										{% for bucket in buckets %}
+											<button class="btn btn-outline-dark btn-sm" type="submit" value="{{ item.post.id }}" name="add2bucket_{{ bucket.name }}">
+												Add to bucket: {{ bucket.name }}
+											</button>
+										{% endfor %}
 									</div>
 								</form>
 							</div>
