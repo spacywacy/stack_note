@@ -1,0 +1,318 @@
+<!doctype html>
+<html lang="en">
+<head>
+<!-- Required meta tags -->
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+<!-- Bootstrap CSS -->
+<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+
+<title>Stack Note</title>
+</head>
+
+
+		
+
+
+
+<body>
+
+
+<div class="container-fluid">
+<div class="row" style="height:1920px">
+
+<!--1st col-->
+<nav class="col-sm-1 d-none d-md-block bg-dark sidebar">
+	<div class="sidebar-sticky">
+		<form method="get">
+			<ul class="nav flex-column">
+				<li class="nav-item {{ menu_tags }}">
+					<input class="btn bth-primary text-white" type="submit" value="Tags" name="Tags">
+				</li>
+				<li class="nav-item {{ menu_sites }}">
+					<input class="btn bth-primary text-white" type="submit" value="Sites" name="Sites">
+				</li>
+				<li class="nav-item {{ menu_dates }}">
+					<input class="btn bth-primary text-white" type="submit" value="Dates" name="Dates">
+				</li>
+				<li class="nav-item {{ menu_buckets }}">
+					<input class="btn bth-primary text-white" type="submit" value="Buckets" name="Buckets">
+				</li>
+			</ul>
+		</form>
+	</div>
+</nav>
+<!--1st col ends-->
+
+
+<!--2nd col-->
+<div class="col-sm-3 d-none d-md-block bg-light sidebar">
+	{% if filter_field in 'TagsSitesBuckets' %}
+	<form method="get">
+		<div class="row">
+			<div class="col-sm-3"><h5 class="font-italic">{{ filter_field }}:</h5></div>
+			<div class="col-sm-5">
+				<button class="btn btn-outline-dark btn-sm" type="submit" name="clear" aria-label="Close" style="border:0px">
+					<span aria-hidden="true">&times;</span>Clear Filter
+				</button>
+			</div>
+		</div>
+		<div class="row" style="padding-left:5%">
+			<div class="form-check">
+				<input class="form-check-input" type="radio" value="name" name="sort_by" id="sort_by_name">
+					<label class="text-muted" for="sort_by_name" style="font-size: .8em">Sort by name</label>
+				</input>
+			</div>
+		</div>
+		<div class="row" style="padding-left:5%">
+			<div class="form-check">
+				<input class="form-check-input" type="radio" value="count" name="sort_by" id="sort_by_count">
+					<label class="text-muted" for="sort_by_count" style="font-size: .8em">Sort by counts</label>
+				</input>
+			</div>
+		</div>
+		<ul class="list-group" style="max-height:1000px;overflow-y:scroll;">
+		{% for item in filter_items %}
+			<li class="list-group-item d-flex justify-content-between align-items-center {{ item.bg_color }}" style="padding-top:0px;padding-bottom:0px">
+				<input class="btn text-left {{ item.text_color }}" type="submit" name="{{ filter_field }}_{{ item.name }}" id="{{ filter_field }}_{{ item.name }}" value="{{ item.name }}">
+				<span class="badge badge-primary badge-pill">{{ item.count }}</span>
+			</li>
+		{% endfor %}
+		</ul>
+	</form>
+	{% elif filter_field in 'Dates' %}
+		<label>xxx</label>
+	{% endif %}
+</div>
+<!--2nd col ends-->
+
+
+<!--3rd col-->
+<div class="col">
+
+	<div class="row-fluid">
+		<form method="get">
+			<i class="fas fa-search" aria-hidden="true"></i>
+			<input class="form-control" type="text" placeholder="Search" aria-label="Search" name="search">
+		</form>
+	</div>
+
+	<div class="row-fluid">
+		<label class="text-muted"><small>Showing {{ n_posts }} posts</small></label>
+	</div>
+
+	<div class="row-fluid top-buffer">
+		<div class="card" style="border: 0px">
+			<!--<div class="card-body">-->
+				<form method="get">
+					{% for item in selected_fields %}
+						<!--<input class="btn btn-outline-primary btn-sm" aria-label="Close" type="submit" value="{{ item }}" name="cleartag_{{ item }}">-->
+						<button type="submit" class="btn btn-outline-primary btn-sm" aria-label="Close" name="clearfilter_{{ item }}" value="{{ item }}">{{ item }}<span aria-hidden="true">&times;</span></button>
+					{% endfor %}
+					{% if not has_filter %}
+						<button class="btn btn-outline-primary btn-sm" aria-label="Close" disabled>All Posts</button>
+					{% endif %}
+				</form>
+			<!--</div>-->
+		</div>
+	</div>
+
+	<div class="row-fluid">
+		<ul class="list-group">
+
+
+		<div id="accordion">
+		{% for item in posts %}
+			<!--<li class="list-group-item"><a href="{{ item.url }}" target="_blank">{{ item.title }}</a></li>-->
+			
+				<div class="card border-0">
+
+					<!--card header-->
+					<div class="card-header bg-white" id="headingOne">
+						<!--<h5 class="mb-0">-->
+							<a href="{{ item.post.url }}" target="_blank">{{ item.post.title }}</a>
+							{% if item.comment %}
+								<div class="row" style="height:0em;padding-left:2%;">{{ item.comment.user_comment }}</div>
+							{% endif %}
+							<button class="btn btn-white btn-sm float-right" data-toggle="collapse" data-target="#collapse{{forloop.counter}}" aria-expanded="true" aria-controls="collapse{{forloop.counter}}">
+								<svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-chevron-down" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+									<path fill-rule="evenodd" d="M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z"/>
+								</svg>
+							</button>
+						<!--</h5>-->
+					</div>
+
+					
+
+					<!--card body-->
+					<div id="collapse{{forloop.counter}}" class="collapse" aria-labelledby="headingOne" data-parent="#accordion">
+						<div class="card-body">
+
+							<div class="row">
+								<div class="text-muted" style="padding-left:2%;padding-bottom:1%;font-size:.9em;">
+									Date added: {{ item.post.entry_date }}
+								</div>
+							</div>
+
+							<div class="row" style="padding-left:0%;">
+								<div class="col">
+								{% for posttag in item.posttag%}
+									<span class="badge badge-secondary" disabled>{{ posttag.tag_key }}</span>
+								{% endfor %}
+								</div>
+							</div>
+
+							<div class="row" style="padding-top:0%;padding-left:2%;font-size:.9em;">
+								<b>Question: </b>{{ item.summary }}...
+							</div>
+
+							{% if item.answers %}
+							{% for answer in item.answers %}
+							<div class="row" style="padding-left:0%;padding-left:2%;">
+								<li class="list-group-item border-0" style="padding-left:0%;padding-top:2%;padding-bottom:0%;font-size:.9em;">
+									<b>Answer: </b>
+									<a class="text-muted" href="{{ answer.marked_answer }}">
+										{{ answer.marked_answer }}...
+									</a>
+								</li>
+								<li class="list-group-item border-0" style="padding-left:0%;padding-top:0%;padding-bottom:0%;font-size:.9em;">
+										{{ answer.answer_text }}...
+								</li>
+
+							</div>
+							{% endfor %}
+							{% endif %}
+
+
+							<div class="row" style="padding-top:1%;padding-bottom:1%;">
+								<div class="col">
+
+									<button
+										class="btn btn-outline-info btn-sm"
+										type="button"
+										style="padding-left:1%;padding-right:1%;padding-top:0%;padding-bottom:0%;"
+										data-toggle="collapse"
+										data-target="#answerbox"
+										aria-controls="answerbox"
+									>
+										Mark an answer
+									</button>
+
+									<button
+										class="btn btn-outline-info btn-sm"
+										type="button"
+										style="padding-left:1%;padding-right:1%;padding-top:0%;padding-bottom:0%;"
+										data-toggle="collapse"
+										data-target="#commentbox"
+										aria-controls="commentbox"
+									>
+										Edit comment
+									</button>
+
+									<button
+										class="btn btn-outline-info btn-sm"
+										type="button"
+										style="padding-left:1%;padding-right:1%;padding-top:0%;padding-bottom:0%;"
+										data-toggle="collapse"
+										data-target="#bucketbox"
+										aria-controls="bucketbox"
+									>
+										Add to bucket
+									</button>
+
+								</div>
+							</div>
+
+							<div class="row">
+							<div class="col">
+							<form method="post">
+								{% csrf_token %}
+								<div class="collapse" id="answerbox">
+								<div class="input-group mb-6">
+									<input class="form-control" type="url" placeholder="Add url to answer" name="answerbox_{{ item.post.id }}">
+									<div class="input-group-append">
+										<input class="btn btn-info btn-sm" type="submit" value="Add">
+									</div>
+								</div>
+								</div>
+							</form>
+							</div>
+							</div>
+
+							<div class="row">
+							<div class="col">
+								<form method="post">
+								{% csrf_token %}
+									<div class="collapse" id="commentbox">
+										<textarea class="form-control" type="textarea" placeholder="Add comment or notes" name="commentbox_{{ item.post.id }}">{{ item.comment.user_comment }}</textarea>
+										<div class="input-group-append">
+											<input class="btn btn-info btn-sm" type="submit" value="Add">
+										</div>
+									</div>
+								</form>
+							</div>
+							</div>
+
+							<div class="row">
+							<div class="col">
+								<form method="post">
+								{% csrf_token %}
+									<div class="collapse" id="bucketbox">
+										{% for bucket in buckets %}
+											<button class="btn btn-outline-dark btn-sm" type="submit" value="{{ item.post.id }}" name="add2bucket_{{ bucket.name }}">
+												Add to bucket: {{ bucket.name }}
+											</button>
+										{% endfor %}
+									</div>
+								</form>
+							</div>
+							</div>
+
+							{% if item.related %}
+							<div class="row" style="padding-left:0%;">
+								<ul style="padding-left:2%;">
+								<li class="list-group-item border-0" style="padding-left:0%;padding-bottom:0.1%;">
+									<h6 class="mb-1">Related Questions</h6>
+								</li>
+								{% for related_post in item.related.posts %}
+									<li class="list-group-item border-0" style="padding-left:0%;padding-top:0%;padding-bottom:0%;font-size:.9em;"><a class="text-muted" href="{{ related_post.url }}">{{ related_post.title }}</a></li>
+								{% endfor %}
+								</ul>
+							</div>
+							{% endif %}
+
+						</div>
+					</div>
+
+				</div>
+			
+		{% endfor %}
+		</div>
+
+
+		</ul>
+	</div>
+
+</div>
+<!--3rd col ends-->
+
+
+
+
+
+
+
+</div><!--outer row ends-->
+</div><!--outer container ends-->
+
+
+<!-- Optional JavaScript -->
+<!-- jQuery first, then Popper.js, then Bootstrap JS -->
+<script src="https://code.jquery.com/jquery-3.4.1.slim.min.js" integrity="sha384-J6qa4849blE2+poT4WnyKhv5vZF5SrPo0iEjwBvKU7imGFAV0wwj1yYfoRSJoZ+n" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js" integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" crossorigin="anonymous"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js" integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6" crossorigin="anonymous"></script>
+</body>
+</html>
+
+
