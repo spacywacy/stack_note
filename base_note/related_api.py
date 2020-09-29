@@ -13,9 +13,9 @@ from config import new_related_path
 from django.db.models import Q
 
 
-def get_related(posts):
+def get_related(post_package):
 	#call api
-	urls = [x.url for x in posts]
+	urls = [x['post'].url for x in post_package]
 	urls = json.dumps(urls)
 	re = requests.get('http://127.0.0.1:5000/related', data={'urls':urls}).json()
 
@@ -37,10 +37,9 @@ def get_related(posts):
 		}
 	]
 	'''
-	posts_package = []
-	for post in posts:
-		related = re.get(post.url)
-		posts_package.append({'post':post, 'related':related})
+	for i in range(len(post_package)):
+		related = re.get(post_package[i]['post'].url)
+		post_package[i]['related'] = related
 		
 		if not related and post.url not in new_items['urls']:
 			tags = PostTag.objects.filter(post_key=post)
@@ -57,10 +56,7 @@ def get_related(posts):
 	#dump new_related.json
 	with open(new_related_path, 'w') as f:
 		json.dump(new_items, f)
-
-
-	#return related_items
-	return posts_package
+	
 
 
 

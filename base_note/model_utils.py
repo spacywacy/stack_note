@@ -98,7 +98,7 @@ def query_user_posts(django_user):
 		return userposts
 
 		
-def filter_posts(userposts, tags=None, sites=None, sdate_entry=None, edate_entry=None, ids=None, buckets=None):
+def filter_posts(userposts, tags=None, sites=None, entry_dates=None, ids=None, buckets=None):
 	#tag: or condition
 	#site: or condition
 	#dates: and condition
@@ -115,13 +115,13 @@ def filter_posts(userposts, tags=None, sites=None, sdate_entry=None, edate_entry
 		filtered = filtered.filter(site__in=sites)
 		has_filter = True
 
-	if sdate_entry:
-		filtered = filtered.filter(entry_date__gte=sdate_entry)
-		has_filter = True
-
-	if edate_entry:
-		filtered = filtered.filter(entry_date__lte=edate_entry)
-		has_filter = True
+	if entry_dates:
+		if entry_dates.get('sdate'):
+			filtered = filtered.filter(entry_date__gte=entry_dates.get('sdate'))
+			has_filter = True
+		if entry_dates.get('edate'):
+			filtered = filtered.filter(entry_date__lte=entry_dates.get('edate'))
+			has_filter = True
 
 	if ids:
 		filtered = filtered.filter(userpost__post_key__id__in=ids)
@@ -132,7 +132,9 @@ def filter_posts(userposts, tags=None, sites=None, sdate_entry=None, edate_entry
 		has_filter = True
 
 	if filtered:
-		return filtered.distinct(), has_filter
+		min_date = filtered.aggregate(Min('entry_date'))['entry_date__min']
+		max_date = filtered.aggregate(Max('entry_date'))['entry_date__max']
+		return [{'post':x} for x in filtered.distinct()], has_filter, (min_date, max_date)
 	else:
 		return None, None
 
@@ -244,6 +246,20 @@ def get_checkbox(get_obj, checkbox_name):
 				results.append(item_name)
 
 	return results
+
+def if_clear_search(get_obj):
+	for k, v in get_obj.items():
+		if 'clearfilter_search:' in k:
+			return True
+
+	return False
+
+def if_clear_dates(get_obj):
+	for k, v in get_obj.items():
+		if 'clearfilter_dates' in k:
+			return True
+
+	return False
 
 def get_post_boxes(post_obj, box_name):
 	results = []

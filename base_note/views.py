@@ -21,10 +21,13 @@ from .model_utils import add_answer_comment
 from .model_utils import get_answer_comment
 from .model_utils import query_buckets
 from .model_utils import add_post_to_bucket
+from .model_utils import if_clear_search
+from .model_utils import if_clear_dates
 from .documents import PostDocument
 from .related_api import get_related
 from config import api_key
 from config import se_sites_path
+from datetime import datetime
 #from .test_models import test
 
 
@@ -34,33 +37,115 @@ def posts(request):
 	print('GET:', request.GET)
 	print('POST:', request.POST)
 	context = {'page_title':'Posts', 'nav_posts':'bg-info'}
-
+	
 	#redirects
 	for k, v in redirect_mapping.items():
 		if k in request.GET:
 			return redirect(v)
 
 	#filtering posts
-	#if 'clear' in request.GET:
-		#selected filter fields = None
-		#clear cached filter fields
-	#else:
-		#get filter fields from form
-		#cache filter fields
-		#remove select filter fields & clear cache for unselected field items
+	if 'clear' in request.GET:
+		selected_sites = None
+		selected_tags = None
+		entry_dates = None
+		cache.delete('selected_sites')
+		cache.delete('selected_tags')
+		cache.delete('search_re_ids')
+		cache.delete('search_term')
+		cache.delete('entry_dates')
+	else:
+		#get filters
+		form_sites = get_checkbox(request.GET, 'sitefilter')
+		form_tags = get_checkbox(request.GET, 'tagfilter')
+		selected_sites = cache.get('selected_sites', default=set())
+		selected_tags = cache.get('selected_tags', default=set())
+		selected_sites = selected_sites.union(set(form_sites))
+		selected_tags = selected_tags.union(set(form_tags))
+		
+		if request.GET.get('sdate') or request.GET.get('edate'):
+			entry_dates = {'sdate':request.GET.get('sdate'), 'edate':request.GET.get('edate')}
+			cache.set('entry_dates', entry_dates)
+		else:
+			entry_dates = cache.get('entry_dates')
+
+		#clear filters
+		clear_form_filters = get_checkbox(request.GET, 'clearfilter')
+		selected_sites = set([x for x in selected_sites if x not in clear_form_filters])
+		selected_tags = set([x for x in selected_tags if x not in clear_form_filters])
+		if if_clear_dates(request.GET):
+			entry_dates = None
+
+		#cache selected
+		cache.set('selected_sites', selected_sites)
+		cache.set('selected_tags', selected_tags)
 
 	#searching posts
-		#get a list of post ids from search
+	if 'search' in request.GET:
+		search_term = request.GET.get('search')
+		search_results = PostDocument.search().query('multi_match', query=search_term, fields=['title', 'text'])
+		search_re_ids = [x.id for x in search_results]
+		cache.set('search_re_ids', search_re_ids)
+		cache.set('search_term', search_term)
+	elif if_clear_search(request.GET):
+		search_re_ids = None
+		search_term = None
+	elif cache.get('search_re_ids', None):
+		search_re_ids = cache.get('search_re_ids')
+		search_term = cache.get('search_term')
+	else:
+		search_re_ids = None
+		search_term = None
 
-	#query models
-		#query tags/sites/dates/buckets
-		#query posts
-		#apply filter fields & search result to queried posts
+
+	#combine selected filters
+	context['selected_fields'] = []
+	if selected_sites:
+		context['selected_fields'] += selected_sites
+	if selected_tags:
+		context['selected_fields'] += selected_tags
+	#if 'search' in request.GET:
+	if search_re_ids and search_term:
+		context['selected_fields'] += ['search:{}'.format(search_term)]
+	if entry_dates:
+		context['selected_fields'] += ['dates']
+	
+
+	#query user posts
+	userposts = query_user_posts(str(request.user))
+
+	#query tags/sites/buckets
+	context['sites'] = query_sites(userposts, selected_sites, request.GET.get('sites_sort_by',None))
+	context['tags'] = query_user_tags(str(request.user), selected_tags, request.GET.get('tags_sort_by',None))
+
+	#apply filter fields & search result to queried posts
+	#also get date range
+	post_package, has_filter, date_range = filter_posts(userposts,
+											tags=selected_tags,
+											sites=selected_sites,
+											entry_dates=entry_dates,
+											ids=search_re_ids)
+	context['posts'] = post_package
+	if post_package:
+		context['n_posts'] = len(post_package)
+	if date_range:
+		context['sdate'] = datetime.strftime(date_range[0], '%Y-%m-%d')
+		context['edate'] = datetime.strftime(date_range[1], '%Y-%m-%d')
+
 
 	#method==post
 		#add answer url & comment
 		#add post to bucket
 		#redirect & show previous view
+
+	#debug
+	#print('\nselected_sites')
+	#print(selected_sites)
+	#print('\nselected_tags')
+	#print(selected_tags)
+	#print(context['tags'])
+	#print(search_term)
+	#print(entry_dates)
+	#print(date_range)
 
 	return render(request, 'posts.html', context)
 
