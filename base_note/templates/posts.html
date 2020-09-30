@@ -145,15 +145,14 @@
 
 	<div class="row-fluid top-buffer">
 		<div class="card" style="border: 0px">
-				<form method="get">
-					{% for item in selected_fields %}
-						<button type="submit" class="btn btn-outline-primary btn-sm" aria-label="Close" name="clearfilter_{{ item }}" value="{{ item }}">{{ item }}<span aria-hidden="true">&times;</span></button>
-					{% endfor %}
-					{% if not selected_fields %}
-						<button class="btn btn-outline-primary btn-sm" aria-label="Close" disabled>All Posts</button>
-					{% endif %}
-				</form>
-			<!--</div>-->
+			<form method="get">
+				{% for item in selected_fields %}
+					<button type="submit" class="btn btn-outline-primary btn-sm" aria-label="Close" name="clearfilter_{{ item }}" value="{{ item }}">{{ item }}<span aria-hidden="true">&times;</span></button>
+				{% endfor %}
+				{% if not selected_fields %}
+					<button class="btn btn-outline-primary btn-sm" aria-label="Close" disabled>All Posts</button>
+				{% endif %}
+			</form>
 		</div>
 	</div>
 
@@ -164,11 +163,10 @@
 		<div id="accordion">
 		{% for item in posts %}
 			<!--<li class="list-group-item"><a href="{{ item.url }}" target="_blank">{{ item.title }}</a></li>-->
-			
+				
 				<div class="card border-0">
-
 					<!--card header-->
-					<div class="card-header bg-white" id="headingOne">
+					<div class="card-header bg-white border-0" id="headingOne">
 						<!--<h5 class="mb-0">-->
 							<div class="row">
 								<div class="col-11">
@@ -197,9 +195,8 @@
 					<!--card header ends-->
 
 					<!--card body-->
-					<div id="collapse{{forloop.counter}}" class="collapse {{ item.show }}" aria-labelledby="headingOne" data-parent="#accordion">
-						<div class="card-body">
-
+					<div id="collapse{{forloop.counter}}" class="collapse {{ item.show }}" aria-labelledby="headingOne" data-parent="#accordion" style="padding-top: 0px;">
+						<div class="card-body border-0">
 							<div class="row" style="padding-left:0%;">
 								<div class="col">
 								{% for posttag in item.posttag%}
@@ -210,6 +207,37 @@
 
 							<div class="row" style="padding-top:0%;padding-left:2%;font-size:.9em;">
 								<b>Question: </b>{{ item.summary }}...
+							</div>
+
+							<button
+								class="btn btn-outline-secondary btn-sm border-0"
+								type="button"
+								style="padding-left:1%;padding-right:1%;padding-top:0%;padding-bottom:0%;"
+								data-toggle="collapse"
+								data-target="#answerbox"
+								aria-controls="answerbox"
+							>
+								<svg width="1.2em" height="1.2em" viewBox="0 0 16 16" class="bi bi-plus-circle" fill="currentColor" xmlns="http://www.w3.org/2000/svg" style="padding-top:0%;padding-bottom:0%;">
+									<path fill-rule="evenodd" d="M8 15A7 7 0 1 0 8 1a7 7 0 0 0 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+									<path fill-rule="evenodd" d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z"/>
+								</svg>
+								<label style="padding-top:0%;padding-bottom:0%;">Mark an answer</label>
+							</button>
+
+							<div class="row">
+							<div class="col">
+							<form method="post">
+								{% csrf_token %}
+								<div class="collapse" id="answerbox">
+								<div class="input-group mb-6">
+									<input class="form-control" type="url" placeholder="Add url to answer" name="answerbox_{{ item.post.id }}">
+									<div class="input-group-append">
+										<input class="btn btn-info btn-sm" type="submit" value="Add">
+									</div>
+								</div>
+								</div>
+							</form>
+							</div>
 							</div>
 
 							{% if item.answers %}
@@ -233,16 +261,17 @@
 							<div class="col">
 								<form method="post">
 									{% csrf_token %}
-									<b style="font-size:.9em;">Your comments: </b>
-									<textarea class="form-control " type="textarea" style="border:0px;font-size:.9em;" placeholder="Add comment or notes" name="commentbox_{{ item.post.id }}" onchange="this.form.submit()" onkeydown="if(event.keyCode == 13) this.form.submit();">{{ item.comment.user_comment }}</textarea>
+									{% if item.comment %}
+										<b style="font-size:.9em;">My comments: </b>
+									{% endif %}
+									<textarea class="form-control " type="textarea" style="border:0px;font-size:.9em;" placeholder="Add some comment or notes" name="commentbox_{{ item.post.id }}" onchange="this.form.submit()" onkeydown="if(event.keyCode == 13) this.form.submit();">{{ item.comment.user_comment }}</textarea>
 								</form>
 							</div>
 							</div>
 
-							
+							<hr/>
 
 						</div>
-						<hr/>
 					</div>
 					<!--card body ends-->
 
