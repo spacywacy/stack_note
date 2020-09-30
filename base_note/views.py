@@ -16,13 +16,15 @@ from .model_utils import query_sites
 from .model_utils import query_date_range
 from .model_utils import get_checkbox
 from .model_utils import get_post_boxes
-from .model_utils import get_tags_of_post
+from .model_utils import get_post_info
 from .model_utils import add_answer_comment
 from .model_utils import get_answer_comment
 from .model_utils import query_buckets
 from .model_utils import add_post_to_bucket
 from .model_utils import if_clear_search
 from .model_utils import if_clear_dates
+from .model_utils import get_post_fields
+from .model_utils import show_post
 from .documents import PostDocument
 from .related_api import get_related
 from config import api_key
@@ -33,7 +35,7 @@ from datetime import datetime
 
 
 
-def posts(request):
+def posts(request, posts_to_show=-1):
 	print('GET:', request.GET)
 	print('POST:', request.POST)
 	context = {'page_title':'Posts', 'nav_posts':'bg-info'}
@@ -117,13 +119,25 @@ def posts(request):
 	context['sites'] = query_sites(userposts, selected_sites, request.GET.get('sites_sort_by',None))
 	context['tags'] = query_user_tags(str(request.user), selected_tags, request.GET.get('tags_sort_by',None))
 
+	#get order
+	post_order = request.GET.get('postorder', None)
+	if not post_order:
+		post_order = '-entry_date'
+
+	post_desc = request.GET.get('post_desc', None)
+	if post_desc:
+		post_order = '-' + post_order
+
 	#apply filter fields & search result to queried posts
 	#also get date range
 	post_package, has_filter, date_range = filter_posts(userposts,
 											tags=selected_tags,
 											sites=selected_sites,
 											entry_dates=entry_dates,
-											ids=search_re_ids)
+											ids=search_re_ids,
+											order_by=post_order)
+	get_post_info(post_package, str(request.user))
+	show_post(post_package, posts_to_show)
 	context['posts'] = post_package
 	if post_package:
 		context['n_posts'] = len(post_package)
@@ -131,11 +145,21 @@ def posts(request):
 		context['sdate'] = datetime.strftime(date_range[0], '%Y-%m-%d')
 		context['edate'] = datetime.strftime(date_range[1], '%Y-%m-%d')
 
+	#query post fields
+	context['post_fields'] = get_post_fields()
+
 
 	#method==post
-		#add answer url & comment
-		#add post to bucket
-		#redirect & show previous view
+	#add answer url & comment
+	posted_id = add_answer_comment(request.POST, str(request.user))
+
+	#add post to bucket
+
+
+	#redirect & show previous view
+	if posted_id:
+		print('redirecting')
+		return redirect(posts, posts_to_show=posted_id)
 
 	#debug
 	#print('\nselected_sites')
@@ -146,6 +170,7 @@ def posts(request):
 	#print(search_term)
 	#print(entry_dates)
 	#print(date_range)
+	#print(get_post_fields())
 
 	return render(request, 'posts.html', context)
 

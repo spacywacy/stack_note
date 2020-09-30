@@ -19,7 +19,7 @@ from .views import Home
 
 urlpatterns = [
 	path('admin/', admin.site.urls),
-	path('base_note/', include('base_note.urls')),
+	path('bookmarks/', include('base_note.urls')),
 	path('accounts/', include('allauth.urls')),
 	path('', Home, name='home')
 ]

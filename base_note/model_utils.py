@@ -97,8 +97,11 @@ def query_user_posts(django_user):
 	if has_results:
 		return userposts
 
+def get_post_fields():
+	fields = [x for x in Post._meta.get_fields() if not x.is_relation][1:]
+	return fields
 		
-def filter_posts(userposts, tags=None, sites=None, entry_dates=None, ids=None, buckets=None):
+def filter_posts(userposts, tags=None, sites=None, entry_dates=None, ids=None, buckets=None, order_by=None):
 	#tag: or condition
 	#site: or condition
 	#dates: and condition
@@ -130,6 +133,9 @@ def filter_posts(userposts, tags=None, sites=None, entry_dates=None, ids=None, b
 	if buckets:
 		filtered = filtered.filter(userpost__post_key__postbucket__bucket_key__bucket_name__in=buckets)
 		has_filter = True
+
+	if order_by:
+		filtered = filtered.order_by(order_by)
 
 	if filtered:
 		min_date = filtered.aggregate(Min('entry_date'))['entry_date__min']
@@ -172,8 +178,31 @@ def query_user_tags(django_user, selected_tags, sort_by=None):
 
 		return results
 
-def get_tags_of_post(post):
-	return PostTag.objects.filter(post_key=post)
+def get_post_info(post_package, user_name):
+	user = User.objects.get(username=user_name)
+
+	for i in range(len(post_package)):
+		post = post_package[i]['post']
+
+		#get tags
+		post_package[i]['posttag'] = PostTag.objects.filter(post_key=post)
+
+		#get question
+		post_package[i]['summary'] = post.text[:350]
+
+		#get answers
+		answers = Markedanswer.objects.filter(post_key=post).filter(user_key=user)
+		if answers:
+			post_package[i]['answers'] = answers
+		else:
+			post_package[i]['answers'] = None
+
+		#get comment
+		comment = Usercomment.objects.filter(post_key=post).filter(user_key=user)
+		if comment:
+			post_package[i]['comment'] = comment[0]
+		else:
+			post_package[i]['comment'] = None
 
 
 
@@ -283,7 +312,7 @@ def add_answer_comment(post_obj, user_name):
 	answer_urls = get_post_boxes(post_obj, 'answerbox')
 	user_comments = get_post_boxes(post_obj, 'commentbox')
 
-	posted = False
+	posted_id = ''
 
 	#loop answer_urls
 	for item in answer_urls:
@@ -297,7 +326,7 @@ def add_answer_comment(post_obj, user_name):
 			marked_answer=answer_url,
 			answer_text=answer_text
 		)
-		posted = True
+		posted_id = post_id
 		comment_obj.save()
 
 	#loop user_comments
@@ -315,12 +344,14 @@ def add_answer_comment(post_obj, user_name):
 				post_key=post,
 				user_comment=user_comment
 			)
-		posted = True
+		posted_id = post_id
 		comment_obj.save()
 
-	if posted:
-		print('added answer comment')
-		return True
+	posted_id = str(posted_id)
+	print('added answer comment')
+	return posted_id
+
+
 
 def add_post_to_bucket(post_obj, user_name):
 	bucket_pairs = get_post_boxes(post_obj, 'add2bucket')
@@ -348,10 +379,21 @@ def add_post_to_bucket(post_obj, user_name):
 
 	return posted
 
+def show_post(post_package, posted_id):
+	if_show = False
+	try:
+		posted_id = int(posted_id)
+		if_show = True
+	except Exception as e:
+		return
+
+	if if_show:
+		for i in range(len(post_package)):
+			if post_package[i]['post'].id == int(posted_id):
+				post_package[i]['show'] = 'show'
 
 
-
-def get_answer_comment(posts_package, user_name):
+def get_answer_comment(post_package, user_name):
 	#get user
 	user = User.objects.get(username=user_name)
 
@@ -362,15 +404,15 @@ def get_answer_comment(posts_package, user_name):
 		#print('answers')
 		#print(answers)
 		if answers:
-			posts_package[i]['answers'] = answers
+			post_package[i]['answers'] = answers
 		else:
-			posts_package[i]['answers'] = None
+			post_package[i]['answers'] = None
 
 		comment = Usercomment.objects.filter(post_key=post).filter(user_key=user)
 		if comment:
-			posts_package[i]['comment'] = comment[0]
+			post_package[i]['comment'] = comment[0]
 		else:
-			posts_package[i]['comment'] = None
+			post_package[i]['comment'] = None
 
 
 
